@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
+  <defs>
+    <linearGradient id="sds-db" x1="14" y1="6.8" x2="14" y2="33.4" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5E8CFF"/>
+      <stop offset="1" stop-color="#2C55D9"/>
+    </linearGradient>
+  </defs>
+  <!-- Database cylinder -->
+  <path d="M5.5 11.5v17.2c0 2.6 3.81 4.7 8.5 4.7s8.5-2.1 8.5-4.7V11.5Z" fill="url(#sds-db)"/>
+  <ellipse cx="14" cy="11.5" rx="8.5" ry="4.7" fill="#9CBEFF"/>
+  <path d="M5.5 19.4c0 2.6 3.81 4.7 8.5 4.7s8.5-2.1 8.5-4.7" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="1.6"/>
+  <!-- Shared / symlink badge -->
+  <circle cx="30" cy="30" r="8" fill="#22C55E"/>
+  <g transform="translate(30 30) scale(0.62) translate(-12 -12)" fill="#FFFFFF">
+    <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
+  </g>
+</svg>

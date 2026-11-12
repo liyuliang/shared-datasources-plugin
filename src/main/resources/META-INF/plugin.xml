@@ -1,0 +1,136 @@
+<idea-plugin>
+    <id>com.github.shareddatasources</id>
+    <name>Shared DataSources</name>
+    <version>1.0.0</version>
+    <vendor>liyuliang</vendor>
+
+    <!-- Marketplace overview — keep in sync with README.md -->
+    <description><![CDATA[
+<b>Share one set of JetBrains Database data sources across all your projects.</b>
+<p>
+This plugin replaces the project-level <code>.idea/dataSources.xml</code> and <code>.idea/dataSources.local.xml</code>
+files with symbolic links pointing at a single shared copy — create a data source once, every project picks it up.
+</p>
+
+<h2>Features</h2>
+<ul>
+  <li><b>Automatic sync on project open</b> — runs as a post-startup activity, no manual steps.</li>
+  <li><b>Symlink-based</b> — the shared files are the single source of truth; edits made in any project are visible everywhere.</li>
+  <li><b>Safe by default</b> — existing regular files are backed up before being replaced.</li>
+  <li><b>Idempotent</b> — correct symlinks are skipped; wrong ones are re-created.</li>
+  <li><b>Notifications</b> — success and failure are reported via IDE balloon notifications.</li>
+  <li><b>Configurable</b> — shared directory, auto-sync, and auto-backup can be toggled in settings.</li>
+</ul>
+
+<h2>How It Works</h2>
+<p>On every project open (when enabled), the plugin:</p>
+<ol>
+  <li>Reads the shared directory from settings (must exist and contain <code>dataSources.xml</code> / <code>dataSources.local.xml</code>).</li>
+  <li>Checks the project's <code>.idea</code> directory (skips projects without one).</li>
+  <li>For each data source file:
+    <ul>
+      <li><b>Correct symlink</b> → skipped</li>
+      <li><b>Wrong symlink</b> → removed and re-created</li>
+      <li><b>Regular file</b> → backed up (optional), then replaced with a symlink</li>
+      <li><b>Missing</b> → fresh symlink created</li>
+    </ul>
+  </li>
+  <li>Backups are written to <code>.idea/dataSources_backup_auto/</code> (only if no backup for that file exists yet).</li>
+  <li>Shows a notification listing how many files were linked, or any errors encountered.</li>
+</ol>
+
+<h2>Requirements</h2>
+<ul>
+  <li>Any JetBrains IDE based on IntelliJ Platform <b>2024.1 (241)</b> through <b>2025.2 (252.*)</b>
+      with the <i>Database</i> plugin (<code>com.intellij.database</code>) — e.g. GoLand, IntelliJ IDEA Ultimate.
+      (Built and tested against GoLand 2024.1.4.)</li>
+  <li><b>Symlink support on Windows</b>: creating symlinks requires either an elevated shell or
+      Windows Developer Mode enabled.</li>
+</ul>
+
+<h2>Installation</h2>
+<p>
+Build the ZIP from source (<code>gradlew buildPlugin</code> or <code>make plugin</code>), then install it via
+<b>Settings/Preferences → Plugins → Install Plugin from Disk…</b> and restart the IDE.
+</p>
+
+<h2>Configuration</h2>
+<p><b>Settings/Preferences → Tools → Shared DataSources</b></p>
+<ul>
+  <li><b>Shared directory</b> (default: <code>${java.io.tmpdir}/.shared-datasources</code>, e.g.
+      <code>C:\Users\&lt;you&gt;\AppData\Local\Temp\.shared-datasources</code> on Windows,
+      <code>/tmp/.shared-datasources</code> on Linux) — directory containing the shared
+      <code>dataSources.xml</code> and <code>dataSources.local.xml</code>.</li>
+  <li><b>Enable automatic sync on project open</b> (default: on) — run the sync automatically each time a project is opened.</li>
+  <li><b>Auto backup existing files before replacing</b> (default: on) — back up existing regular files to
+      <code>.idea/dataSources_backup_auto/</code> first.</li>
+</ul>
+<p>
+To get started: copy <code>dataSources.xml</code> and <code>dataSources.local.xml</code> from any project's
+<code>.idea</code> folder into the shared directory, then open any project — the files under <code>.idea</code>
+will be linked to the shared copies.
+</p>
+
+<h2>Development</h2>
+<pre>
+make run           # launch a sandbox IDE with the plugin installed
+make test          # run tests
+make plugin        # build the plugin ZIP into ./out/
+make clean         # remove build outputs and ./out
+make distclean     # also remove .gradle and .intellijPlatform caches
+</pre>
+<p>Equivalent Gradle tasks: <code>runIde</code>, <code>test</code>, <code>buildPlugin</code>, <code>clean</code>.</p>
+<pre>
+src/main/kotlin/com/github/shareddatasources/
+├── SharedDataSourcesActivity.kt       # Post-startup sync logic (symlink creation, backup)
+├── SharedDataSourcesConfigurable.kt   # Settings UI (Settings → Tools → Shared DataSources)
+└── SharedDataSourcesSettings.kt       # Persistent application-level settings (sharedDataSources.xml)
+
+src/main/resources/META-INF/
+├── plugin.xml                         # Plugin descriptor &amp; extension registrations
+├── pluginIcon.svg                     # Plugin logo (light theme)
+└── pluginIcon_dark.svg                # Plugin logo (dark theme)
+</pre>
+
+<h2>Notes &amp; Limitations</h2>
+<ul>
+  <li>The default shared directory lives under the <b>OS temp directory</b>, which the system may clean
+      automatically (e.g. on reboot or by Storage Sense). Once you start relying on the shared data
+      sources, point the setting at a persistent location instead.</li>
+  <li>The sync only runs <b>on project open</b>; changes made to the shared files while a project is
+      already open are picked up by the IDE naturally, since it is the same underlying file.</li>
+  <li>Shared file names are fixed: <code>dataSources.xml</code> and <code>dataSources.local.xml</code>.</li>
+  <li>The plugin never deletes data silently: regular files are backed up first (when auto-backup is on),
+      and backup files are not overwritten if they already exist.</li>
+</ul>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.database</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity
+            implementation="com.github.shareddatasources.SharedDataSourcesActivity"/>
+        <applicationConfigurable
+            parentId="tools"
+            instance="com.github.shareddatasources.SharedDataSourcesConfigurable"
+            id="com.github.shareddatasources.settings"
+            displayName="Shared DataSources"/>
+        <applicationService
+            serviceImplementation="com.github.shareddatasources.SharedDataSourcesSettings"/>
+        <notificationGroup id="SharedDataSources"
+                           displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <group id="SharedDataSources.ActionGroup"
+               text="Shared DataSources"
+               popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="SharedDataSources.Cleanup"
+                    class="com.github.shareddatasources.SharedDataSourcesCleanupAction"
+                    text="Restore Original DataSources"
+                    description="Remove symlinks and restore original dataSources files from backup. Run this before uninstalling the plugin."/>
+        </group>
+    </actions>
+</idea-plugin>
